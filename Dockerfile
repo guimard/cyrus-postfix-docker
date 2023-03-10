@@ -19,6 +19,10 @@ FROM debian-backports-updated
 
 ARG S6_OVERLAY_VERSION=3.1.3.0
 
+LABEL maintainer="Yadd yadd@debian.org>" \
+      name="yadd/cyrus-imapd-postfix" \
+      version="v1.0"
+
 RUN \
     echo cyrus-common cyrus-common/removespools boolean false | debconf-set-selections && \
     echo postfix postfix/main_mailer_type select "Internet Site" | debconf-set-selections && \
