@@ -1,0 +1,49 @@
+name: Build and Publish Docker Images
+
+env:
+  DEBIANVERSION: bullseye
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-push-cyrus-imapd-postfix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: yadd/cyrus-imapd-postfix
+      - name: Build and push Docker image for pg
+        uses: docker/build-push-action@v4
+        with:
+          context: ./pg
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/s390x
+          push: true
+          tags: |
+            yadd/cyrus-imapd-postfix:latest
+            yadd/cyrus-imapd-postfix:${{ env.DEBIANVERSION }}-backports
+          label: ${{ steps.meta.outputs.labels }}
+      - name: push README to Dockerhub
+        uses: christian-korneck/update-container-description-action@v1
+        env:
+          DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
+        with:
+          destination_container_repo: yadd/lemonldap-ng-pg-database
+          provider: dockerhub
+          short_description: 'Cyrus-Imapd and Postfix based on Debian backports packages'
+          readme_file: './README.md'
