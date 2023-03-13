@@ -34,8 +34,8 @@ Environment variables for Postfix _(with default value)_:
 
 ## Repository and bug reports
 
-* Repository: [github.com/guimard/cyrus-postfix-docker](https://github.com/guimard/cyrus-postfix-docker/tree/master/base)
-* [Dockerfile](https://github.com/guimard/cyrus-postfix-docker/blob/master/base/Dockerfile)
+* Repository: [github.com/guimard/cyrus-postfix-docker](https://github.com/guimard/cyrus-postfix-docker)
+* [Dockerfile](https://github.com/guimard/cyrus-postfix-docker/blob/master/Dockerfile)
 * [Issues database](https://github.com/guimard/cyrus-postfix-docker/issues)
 
 ## Copyright and license
