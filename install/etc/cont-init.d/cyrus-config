@@ -1,0 +1,4 @@
+#!/command/with-contenv sh
+
+mkdir -p /run/cyrus
+chown cyrus /run/cyrus
