@@ -2,3 +2,10 @@
 
 mkdir -p /run/cyrus
 chown cyrus /run/cyrus
+
+if test "$CYRUS_PWD" = ""; then
+	echo "CYRUS_PWD isn't set, unable to configure cyrus adm password" >&2
+else
+	echo -n "$CYRUS_PWD" | saslpasswd2 -p cyrus
+fi
+perl -i -pe 's/^sasl_auxprop_plugin:.*$//;s/^sasl_pwcheck_method:.*$/sasl_pwcheck_method: '$SASL_PWCHECK_METHOD'\nsasl_auxprop_plugin: '$SASLDB'/' /etc/imapd.conf

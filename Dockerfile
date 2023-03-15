@@ -2,12 +2,7 @@ ARG DEBIANVERSION=bullseye
 
 FROM debian:${DEBIANVERSION}-slim as debian-backports-updated
 
-ENV DEBIAN_VERSION=bullseye \
-    MAILNAME=mail.example.com \
-    OTHER_DESTINATIONS="example.com mail.example.com" \
-    RELAY_HOST= \
-    MYNETWORKS="127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128" \
-    ROOT_ADDRESS=
+ENV DEBIAN_VERSION=bullseye
 
 RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
     apt-get -y update && \
@@ -22,6 +17,16 @@ ARG S6_OVERLAY_VERSION=3.1.3.0
 LABEL maintainer="Yadd yadd@debian.org>" \
       name="yadd/cyrus-imapd-postfix" \
       version="v1.0"
+
+ENV DEBIAN_VERSION=bullseye \
+    MAILNAME=mail.example.com \
+    OTHER_DESTINATIONS="example.com mail.example.com" \
+    RELAY_HOST= \
+    MYNETWORKS="127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128" \
+    ROOT_ADDRESS= \
+    CYRUS_PWD= \
+    SASL_PWCHECK_METHOD="saslauthd auxprop" \
+    SASLDB=sasldb
 
 RUN \
     echo cyrus-common cyrus-common/removespools boolean false | debconf-set-selections && \
@@ -44,7 +49,8 @@ RUN \
       cyrus-admin/${DEBIAN_VERSION}-backports \
       cyrus-caldav/${DEBIAN_VERSION}-backports \
       libcyrus-imap-perl/${DEBIAN_VERSION}-backports \
-      postfix && \
+      postfix \
+      sasl2-bin && \
     apt autoremove -y && apt clean && rm -rf /var/lib/apt/lists/* && \
     rm -f /etc/postfix/master.cf.proto \
       /etc/postfix/sasl_passwd \
