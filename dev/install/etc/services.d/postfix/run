@@ -1,0 +1,27 @@
+#!/command/with-contenv sh
+
+if test ! -e /etc/postfix/main.cf; then
+
+	#echo cyrus-common cyrus-common/removespools boolean false | debconf-set-selections
+	#echo postfix postfix/main_mailer_type select "Internet Site" | debconf-set-selections
+	#echo postfix postfix/relayhost string "" | debconf-set-selections
+	#echo postfix postfix/procmail boolean false | debconf-set-selections
+	#echo postfix postfix/protocols select all | debconf-set-selections
+	#echo postfix postfix/recipient_delim string "+" | debconf-set-selections
+	#echo postfix postfix/chattr boolean false | debconf-set-selections
+	#echo postfix postfix/mailbox_limit string 0 | debconf-set-selections
+	#echo postfix postfix/newaliases boolean false | debconf-set-selections
+	echo postfix postfix/mailname string "$MAILNAME" | debconf-set-selections
+	echo postfix postfix/destinations string "$OTHER_DESTINATIONS" | debconf-set-selections
+	echo postfix postfix/mynetworks string "$MYNETWORKS" | debconf-set-selections
+	echo postfix postfix/root_address string "$ROOT_ADDRESS" | debconf-set-selections
+
+	/var/lib/dpkg/info/postfix.postinst configure
+	export DEBIAN_FRONTEND="noninteractive"
+	dpkg-reconfigure postfix
+	echo 'cyrus     unix  -       n       n       -       -       pipe' >> /etc/postfix/master.cf
+	echo '  flags=DRX user=cyrus argv=/usr/lib/cyrus/bin/deliver -e -r ${sender} -m ${extension} ${user}' >> /etc/postfix/master.cf
+	echo "mailbox_transport = cyrus" >> /etc/postfix/main.cf
+fi
+
+postfix start-fg

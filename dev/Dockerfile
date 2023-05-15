@@ -1,17 +1,18 @@
-ARG DEBIANVERSION=bullseye
+ARG DEBIANVERSION=unstable
 
-FROM debian:${DEBIANVERSION}-slim as debian-backports-updated
+FROM debian:${DEBIANVERSION}-slim as debian-unstable-updated
 
-ENV DEBIAN_VERSION=bullseye
+ENV DEBIAN_VERSION=unstable
+
+COPY apt-order /etc/apt/preferences.d/
 
 RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
+    echo "deb http://deb.debian.org/debian experimental main" > /etc/apt/sources.list.d/backports.list && \
     apt-get -y update && \
-    apt-get -y install xz-utils && \
     apt-get -y dist-upgrade && \
-    echo "deb http://deb.debian.org/debian" ${DEBIAN_VERSION}"-backports main" > /etc/apt/sources.list.d/backports.list && \
-    apt-get -y update
+    apt-get -y install xz-utils
 
-FROM debian-backports-updated as debian-backports-updated-with-s6
+FROM debian-unstable-updated as debian-unstable-updated-with-s6
 
 ARG S6_OVERLAY_VERSION=3.1.3.0
 
@@ -23,7 +24,7 @@ RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.ta
     tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && rm /tmp/s6-overlay-x86_64.tar.xz && \
     tar -C / -Jxpf /tmp/syslogd-overlay-noarch.tar.xz && rm /tmp/syslogd-overlay-noarch.tar.xz
 
-FROM debian-backports-updated-with-s6
+FROM debian-unstable-updated-with-s6
 
 ENV DEBIAN_VERSION=bullseye
 
@@ -56,12 +57,12 @@ RUN \
     echo postfix postfix/root_address string "$ROOT_ADDRESS" | debconf-set-selections && \
     echo postfix postfix/newaliases boolean false | debconf-set-selections && \
     apt install -y xz-utils \
-      cyrus-imapd/${DEBIAN_VERSION}-backports \
-      cyrus-pop3d/${DEBIAN_VERSION}-backports \
-      cyrus-nntpd/${DEBIAN_VERSION}-backports \
-      cyrus-admin/${DEBIAN_VERSION}-backports \
-      cyrus-caldav/${DEBIAN_VERSION}-backports \
-      libcyrus-imap-perl/${DEBIAN_VERSION}-backports \
+      cyrus-imapd/experimental \
+      cyrus-pop3d/experimental \
+      cyrus-nntpd/experimental \
+      cyrus-admin/experimental \
+      cyrus-caldav/experimental \
+      libcyrus-imap-perl/experimental \
       postfix \
       sasl2-bin && \
     apt autoremove -y && apt clean && rm -rf /var/lib/apt/lists/* && \
