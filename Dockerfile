@@ -1,37 +1,8 @@
-ARG DEBIANVERSION=bullseye
+ARG DEBIAN_VERSION=bookworm
 
-FROM debian:${DEBIANVERSION}-slim as debian-backports-updated
+FROM debian:${DEBIAN_VERSION}-slim
 
-ENV DEBIAN_VERSION=bullseye
-
-RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
-    apt-get -y update && \
-    apt-get -y install xz-utils && \
-    apt-get -y dist-upgrade && \
-    echo "deb http://deb.debian.org/debian" ${DEBIAN_VERSION}"-backports main" > /etc/apt/sources.list.d/backports.list && \
-    apt-get -y update
-
-FROM debian-backports-updated as debian-backports-updated-with-s6
-
-ARG S6_OVERLAY_VERSION=3.1.3.0
-
-# S6
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
-ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/syslogd-overlay-noarch.tar.xz /tmp
-RUN tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.tar.xz && \
-    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && rm /tmp/s6-overlay-x86_64.tar.xz && \
-    tar -C / -Jxpf /tmp/syslogd-overlay-noarch.tar.xz && rm /tmp/syslogd-overlay-noarch.tar.xz
-
-FROM debian-backports-updated-with-s6
-
-ENV DEBIAN_VERSION=bullseye
-
-LABEL maintainer="Yadd yadd@debian.org>" \
-      name="yadd/cyrus-imapd-postfix" \
-      version="v1.0"
-
-ENV DEBIAN_VERSION=bullseye \
+ENV DEBIAN_VERSION=bookworm \
     MAILNAME=mail.example.com \
     OTHER_DESTINATIONS="example.com mail.example.com" \
     RELAY_HOST= \
@@ -41,7 +12,25 @@ ENV DEBIAN_VERSION=bullseye \
     SASL_PWCHECK_METHOD="saslauthd auxprop" \
     SASLDB=sasldb
 
-RUN \
+ARG S6_OVERLAY_VERSION=3.1.3.0
+
+LABEL maintainer="Yadd yadd@debian.org>" \
+      name="yadd/cyrus-imapd-postfix" \
+      version="v1.0"
+
+# S6
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-x86_64.tar.xz /tmp
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/syslogd-overlay-noarch.tar.xz /tmp
+
+RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
+    echo "deb http://deb.debian.org/debian" ${DEBIAN_VERSION}"-backports main" > /etc/apt/sources.list.d/backports.list && \
+    apt-get -y update && \
+    apt-get -y dist-upgrade && \
+    apt-get -y install xz-utils && \
+    tar -C / -Jxpf /tmp/s6-overlay-noarch.tar.xz && rm /tmp/s6-overlay-noarch.tar.xz && \
+    tar -C / -Jxpf /tmp/s6-overlay-x86_64.tar.xz && rm /tmp/s6-overlay-x86_64.tar.xz && \
+    tar -C / -Jxpf /tmp/syslogd-overlay-noarch.tar.xz && rm /tmp/syslogd-overlay-noarch.tar.xz && \
     echo cyrus-common cyrus-common/removespools boolean false | debconf-set-selections && \
     echo postfix postfix/main_mailer_type select "Internet Site" | debconf-set-selections && \
     echo postfix postfix/mailname string "$MAILNAME" | debconf-set-selections && \
@@ -77,12 +66,11 @@ RUN \
       /etc/postfix/regexmap \
       /etc/postfix/canonical.db \
       /etc/postfix/master.cf \
-      /etc/postfix/main.cf.proto
-
-RUN perl -i -pe 's/httpmodules: .*$/httpmodules: carddav caldav jmap/' /etc/imapd.conf
-RUN echo 'conversations: 1' >> /etc/imapd.conf
-RUN echo 'conversations_db: twoskip' >> /etc/imapd.conf
-RUN /usr/lib/cyrus/bin/ctl_conversationsdb -b -r
+      /etc/postfix/main.cf.proto && \
+    perl -i -pe 's/httpmodules: .*$/httpmodules: carddav caldav jmap/' /etc/imapd.conf && \
+    echo 'conversations: 1' >> /etc/imapd.conf && \
+    echo 'conversations_db: twoskip' >> /etc/imapd.conf && \
+    /usr/lib/cyrus/bin/ctl_conversationsdb -b -r
 
 
 EXPOSE 25 465 587 110 143 993 995 2000 8008 8443
