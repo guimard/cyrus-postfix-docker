@@ -1,8 +1,8 @@
-ARG DEBIAN_VERSION=bookworm
+ARG DEBIAN_VERSION=unstable
 
 FROM debian:${DEBIAN_VERSION}-slim
 
-ENV DEBIAN_VERSION=bookworm \
+ENV DEBIAN_VERSION=unstable \
     MAILNAME=mail.example.com \
     OTHER_DESTINATIONS="example.com mail.example.com" \
     RELAY_HOST= \
@@ -24,7 +24,6 @@ ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLA
 ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/syslogd-overlay-noarch.tar.xz /tmp
 
 RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
-    echo "deb http://deb.debian.org/debian" ${DEBIAN_VERSION}"-backports main" > /etc/apt/sources.list.d/backports.list && \
     apt-get -y update && \
     apt-get -y dist-upgrade && \
     apt-get -y install xz-utils && \
@@ -45,12 +44,12 @@ RUN echo "# Install packages from ${DEBIAN_VERSION}" && \
     echo postfix postfix/root_address string "$ROOT_ADDRESS" | debconf-set-selections && \
     echo postfix postfix/newaliases boolean false | debconf-set-selections && \
     apt install -y xz-utils \
-      cyrus-imapd/${DEBIAN_VERSION}-backports \
-      cyrus-pop3d/${DEBIAN_VERSION}-backports \
-      cyrus-nntpd/${DEBIAN_VERSION}-backports \
-      cyrus-admin/${DEBIAN_VERSION}-backports \
-      cyrus-caldav/${DEBIAN_VERSION}-backports \
-      libcyrus-imap-perl/${DEBIAN_VERSION}-backports \
+      cyrus-imapd \
+      cyrus-pop3d \
+      cyrus-nntpd \
+      cyrus-admin \
+      cyrus-caldav \
+      libcyrus-imap-perl \
       postfix \
       sasl2-bin && \
     apt autoremove -y && apt clean && rm -rf /var/lib/apt/lists/* && \
